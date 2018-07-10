@@ -1,0 +1,8 @@
+[package]
+name = "prana"
+version = "0.1.0"
+authors = ["naveen <naveendavisv@gmail.com>"]
+
+[dependencies]
+termios = "0.3"
+libc = "0.2"
