@@ -2,7 +2,9 @@
 
 extern crate libc;
 extern crate termios;
-
+use std::fs::File;
+use std::io::prelude::*;
+use std::str;
 use std::io::*;
 use std::io::Read;
 use std::io::Write;
@@ -12,6 +14,8 @@ use termios::{CS8, OPOST};
 use termios::{BRKINT, ICRNL, INPCK, ISTRIP, IXON};
 use termios::{ECHO, ICANON, IEXTEN, ISIG};
 
+
+	
 fn editor_refreshscreen(){
 	
     std::io::stdout().write(b"\x1b[2J");
@@ -44,24 +48,49 @@ fn editor_drawrows(r:u16){
     std::io::stdout().write(b"\x1b[H");
 }
 
-fn editor_read_key()-> [u8;1]{
+fn editor_read_key()-> std::vec::Vec<u8>{
 		
         let mut reader = std::io::stdin();
-	let mut buffer = [0;1];
-    	reader.read_exact(&mut buffer).unwrap();
-	return buffer;
+	let mut buffer = vec![0;1]; 
+    	reader.read(&mut buffer);
+	buffer
+
 
 }
 	
 	
 fn editor_process_key(){
+     let mut text_rows = String::new();	
      let mut c = editor_read_key();
-     while c[0] != 113 {
+	
+//	println!("{}",c);
+//     let mut s = match str::from_utf8(&mut c){
+//	Ok(v) => { if  v != "q"{
+//			 println!("{}", v)
+//		 }},
+//	Err(e) => panic!("invalid UTF-8 :{}",e),
+//     };
+     while c[0] as char != 'q' {
+	text_rows.push(c[0] as char);
 	c = editor_read_key();
-	println!("{:?}\r",c);
-     }
-    
+//	s = match str::from_utf8(&c){
+//		Ok(v) => v,	
+//		Err(e) => panic!("invalid UTF-8:{}",e),
+//	};
+	print!("{}",c[0] as char);
+	std::io::stdout().flush();
+//	println!("{}\r",text_rows);
+    }
+   editor_file_write(text_rows); 
+//	println!("{}\r",text_rows);
+//        editor_read_key();
     editor_exit();     
+}
+
+fn editor_file_write(text1:String) -> std::io::Result<()>{
+	let mut file = File::create("foo1.txt")?;
+	file.write_all(text1.as_bytes())?;
+	Ok(())
 }
 
 fn init_screen(termios:&termios::Termios){
@@ -97,6 +126,7 @@ fn main() {
     init_screen(&termios);	
     editor_process_key();
     editor_exit();
+    
     tcsetattr(stdin,TCSANOW, &mut termios).unwrap();
 }
 
